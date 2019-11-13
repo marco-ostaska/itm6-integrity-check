@@ -23,16 +23,24 @@ python itm6-integrity-check.py <config-file>
 
 ### itm6-integrity-check.yml
 
-- all configuration is done into itm6-integrity-check.yml file that needs to be placed in to the same directory as the script.
+- all configuration is done into itm6-integrity-check.yml file that needs to be placed in to the same directory as the script. Other wise you need to specify one as argument
 
 #### itm6-integrity-check.yml (example)
 
 ```yaml
 tep: "tepserver1"                   # your tep name
 hub: "htem1"                        # your htem name
-restp: "cXaYWpsdfsdYzRaZE4ykkg=="   # b64 user and passord for ITMRest
+restp: "abcdferfgtre=="             # b64 user and passord for ITMRest
+
+slack:
+  channel: '#channel-name'          # slack channel to receive the msg
+  user: "slack-user-to-alert"       # the user you want to alert
+  emoji: ':slack:'                  # slack emoji to use
+  token: 'XXXXXXX/YYYYYY/ZZZZZ'     # slack webhook token
+
 pc:
   SA:                               # ITM product Code (in this case SA)
+    check: True                     # Boolean flag to mark if it should be processed or not (optional, defaults to False)
     ibmStatic: "STATIC049"          # ITMREST id referent to product code
     MetricGroup:                    # list of metric groups to collect from
       - "KSAALERTS" # Alerts
@@ -108,6 +116,9 @@ pc:
 There spme different error codes and their corresponding error messages that may appear during bad conditions. At the time  of  this  writing,  the exit codes are:
 
 ```
-14    yaml.YAMLError (unable to parse yaml file)
-10    Unable to open config file (permission error or file does not exist)
+10    Missing argument <yml file>
+11    yaml.YAMLError (unable to parse yaml file)
+12    Unable to open config file, please check permission
+13    Unable to open config file, file not found
+14    Failed to connect to API
 ```
