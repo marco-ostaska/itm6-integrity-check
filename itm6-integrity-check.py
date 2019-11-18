@@ -126,7 +126,7 @@ def slackme(channel, usr, msg, emoji, token):
     print("Slack message: {}".format(data.decode("utf-8")))
 
 
-def get_ITMREST(agent=None, ibmStatic="Validate", MetricGroup=False):
+def get_ITMREST(agent=None, ibmStatic="Validate", MetricGroup=False, properties=None):
     """return the json from ITMRest.
 
     Keyword arguments:
@@ -147,8 +147,11 @@ def get_ITMREST(agent=None, ibmStatic="Validate", MetricGroup=False):
         url = ("/ibm/tivoli/rest/providers/itm.HUB_{}"
                "/datasources/TMSAgent.%25IBM.{}"
                "/datasets/MetricGroup.{}"
-               "/items?&param_SourceToken={}"
-               "&properties=all".format(hub, ibmStatic, MetricGroup, agent)
+               "/items??optimize=true"
+               "&param_SourceToken={}"
+               "&properties={}"
+               "&start=0&count=1&param_Limit=2".format(
+                   hub, ibmStatic, MetricGroup, agent, properties)
                )
 
     headers = {
@@ -176,19 +179,19 @@ def IntegrityCheck(pcObj):
     errObj = ERRORs()
 
     for ag in pcObj.agents:
+        stime = time.time()
         # if any metric is already broken
         # no need to continue, it is already an issue
         errObj.flag = False
-        for m in pcObj.MetricGroup:
+        for m, pr in pcObj.MetricGroup.items():
             if errObj.flag:
                 break
-            json_obj = get_ITMREST(ag, pcObj.ibmStatic, m)
+            json_obj = get_ITMREST(ag, pcObj.ibmStatic, m, pr)
 
             if json_obj == "timeout":
                 errObj.flag = True
                 errObj.timeout_lst.append([ag, m, "timeout"])
                 print("{};{};timeout".format(ag, m))
-                time.sleep(30)
                 test_api()
             else:
                 try:
@@ -198,13 +201,18 @@ def IntegrityCheck(pcObj):
                         print("{};{};notCollecting".format(ag, m))
                         errObj.flag = True
                 except KeyError:
-                    errObj.err_lst.append([ag, m, "KeyError"])
+                    errObj.err_lst.append([ag, m, "Offline or removed"])
                     print("{};{};KeyError".format(ag, m))
                     errObj.flag = True
                 except:
                     errObj.err_lst.append([ag, m, "unknowError"])
                     print("{};{};unknowError".format(ag, m))
                     errObj.flag = True
+        etime = round(time.time() - stime)
+        sleeptime = (etime * 2) if (etime * 2) > 0 else 0.5
+
+        print("{} [{},{}]".format(ag, etime, sleeptime))
+        time.sleep(sleeptime)
     return errObj
 
 
@@ -237,6 +245,7 @@ def main():
     pc = yml.cfg["pc"]
 
     for p in pc:
+
         pcObj = PC(p)
         if pcObj.agents:
             errObj = IntegrityCheck(pcObj)
@@ -244,6 +253,7 @@ def main():
                 ErrReport("ERRORS", errObj.err_lst)
             if len(errObj.timeout_lst) > 0:
                 ErrReport("TIMEOUT", errObj.timeout_ls)
+    time.sleep(yml.cfg["cycle"])
 
     ## ticket
 
