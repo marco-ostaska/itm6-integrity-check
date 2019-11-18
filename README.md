@@ -30,7 +30,8 @@ python itm6-integrity-check.py <config-file>
 ```yaml
 tep: "tepserver1"                   # your tep name
 hub: "htem1"                        # your htem name
-restp: "abcdferfgtre=="             # b64 user and passord for ITMRest
+restp: "abcdefghijkl=="             # b64 user and passord for ITMRest
+cycle:                              # timw to wait in sec before check for next pc
 
 slack:
   channel: '#channel-name'          # slack channel to receive the msg
@@ -39,18 +40,15 @@ slack:
   token: 'XXXXXXX/YYYYYY/ZZZZZ'     # slack webhook token
 
 pc:
-  SA:                               # ITM product Code (in this case SA)
+  LZ:                               # ITM product Code (in this case LZ)
     check: True                     # Boolean flag to mark if it should be processed or not (optional, defaults to False)
     ibmStatic: "STATIC049"          # ITMREST id referent to product code
     MetricGroup:                    # list of metric groups to collect from
-      - "KSAALERTS" # Alerts
-      - "KSASLOG"   # System Log
-      - "KSABUFFER" # Buffer Performance (Superseded)
-      - "KSASYS"    # Instance Configuration
-      - "KSALOCKS"  # Lock Entries
-      - "KSADUMPS"  # ABAP Dumps
-      - "KSAPROCESS" # Work Processes
-    tgrep: "grep -i :Ins"           # used for tacmd in case of -t <pc> is not enough
+      LNXSYS:                         # Linux System Static
+        SYSUPTIM                        # System Uptime
+      KLZCPU:                         # Linux CPU
+        SYSCPU                          # System CPU (Percent)
+    tgrep: "grep -i :LZ"             # used for tacmd in case of -t <pc> is not enough
 
 ```
 
@@ -59,55 +57,81 @@ pc:
 ```yml
 pc:
   LZ:
+    check: true
     ibmStatic: "STATIC134"
     MetricGroup:
-      - "LNXSYS"        # Linux System Static
-      - "KLZCPU"        # Linux CPU
-  IS:
-    ibmStatic: "STATIC126"
-    MetricGroup:
-      - "KISTCPPORT"    # KIS TCPPORT
-      - "KISMSTATS"     # KIS MONITOR STATUS
-      - "KISHTTP"       # KIS HTTP
-  OQ:
-    ibmStatic: "STATIC067"
-    MetricGroup:
-      - "KOQDBS"
-      - "KOQPROBS"
-  S7:
-    ibmStatic: "SAP_HANA"
-    MetricGroup:
-      - "KS7CURALRT"    # KS7 CURRENT ALERTS
-      - "KS7SYSDB"      # KS7 SYSTEM DATABASE
-      - "KS7HOSTINF"    # KS7 HOST INFORMATION
-    tgrep: "grep -i :S7"
-  NT:
-    ibmStatic: "STATIC021"
-    MetricGroup:
-      - "WTSYSTEM"      # System
-      - "NTSERVICE"     # Services
-  UD:
-    ibmStatic: "STATIC121"
-    MetricGroup:
-      - "KUD4238000"
-      - "KUDTABSPC"
-      - "KUD3437600"
-  UX:
-    ibmStatic: "STATIC013"
-    MetricGroup:
-      - "KUXPASMGMT"
-      - "UNIXDCSTAT"
+      LNXSYS:                 # Linux System Static
+        SYSUPTIM                # System Uptime
+      KLZCPU:                 # Linux CPU
+        SYSCPU                  # System CPU (Percent)
   SA:
+    check: True
     ibmStatic: "STATIC049"
     MetricGroup:
-      - "KSAALERTS"     # Alerts
-      - "KSASLOG"       # System Log
-      - "KSABUFFER"     # Buffer Performance (Superseded)
-      - "KSASYS"        # Instance Configuration
-      - "KSALOCKS"      # Lock Entries
-      - "KSADUMPS"      # ABAP Dumps
-      - "KSAPROCESS"    # Work Processes
+      KSASYS:                 # Instance Configuration
+        "INSTANCE,INST_NO"       # Instance Name, Instance Number
     tgrep: "grep -i :Ins"
+  S7:
+    check: True
+    ibmStatic: "SAP_HANA"
+    MetricGroup:
+      KS7SYSDB:              # KS7 SYSTEM DATABASE
+        STATUS                 # DB Status
+      KS7HOSTINF:           # KS7 HOST INFORMATION
+        STATUS                 # Status
+    tgrep: "grep -i :S7"
+  RZ:
+    check: True
+    ibmStatic: "OracleAgentRDB"
+    MetricGroup:
+      KRZACTINS:            # KRZ RDB ACTIVE INSTANCE
+        "INSTNAME, STATUS"    # "Instance Name, STATUS"
+    tgrep: "grep -E '^RZ'"
+  3Z:
+    check: True
+    ibmStatic: STATIC168
+    MetricGroup:
+      K3ZNTDSDCA:            # Domain Controller Availability
+        DCARPP                 # DCA Repl Partners
+  OQ:
+    check: True
+    ibmStatic: STATIC067
+    MetricGroup:
+      KOQDBD:               # MS SQL Database Detail
+        DBNAME                # Database Name
+      KOQJOBD:              # MS SQL Job Detail
+        KOQJOBD              # Job Id
+  UX:
+    check: True
+    ibmStatic: STATIC013
+    MetricGroup:
+      UNIXOS:              # System
+        SYSTEMTYPE           # Type
+  Q5:
+    check: True
+    ibmStatic: STATIC107
+    MetricGroup:
+      KQ5AVAIL:          # KQ5 AVAILABILITY
+        STATUS             # Status
+  IS:
+    check: True
+    ibmStatic: STATIC126
+    MetricGroup:
+      KISSISTATS:       # KIS SERVICE INSTANCE STATISTICS
+        ISMPROFILE        #  Profile
+  LO:
+    check: True
+    ibmStatic: KLO
+    MetricGroup:
+      KLOLOGFST:       # KLO LOG FILE STATUS
+        FILSTAT          # File Status
+    tgrep: "grep :LO"
+  NT:
+    check: True
+    ibmStatic: STATIC021
+    MetricGroup:
+      NTCOMPINFO:      # Computer Information
+        COMPFQDN         # Computer Domain Name
 ```
 
 
