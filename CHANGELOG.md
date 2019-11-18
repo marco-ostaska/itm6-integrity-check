@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.4.0] - 2019-11-18
+### ADDED
+- performance margin check to do not overload API
+- new yaml format with more details to do not overload API
+- pc cycles
 
 ## [0.3.0] - 2019-11-13
 ### ADDED
