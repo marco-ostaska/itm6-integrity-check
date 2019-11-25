@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+import base64
 import yaml
 import time
 import socket
@@ -80,9 +81,15 @@ class PC(object):
             cmd = "tacmd listsystems -t {} | grep -w Y | {}".format(pc, tgrep)
         else:
             cmd = "tacmd listsystems -t {} | grep -w Y".format(pc)
+        b64 = base64.b64decode(yml.cfg["restp"]).decode("utf-8")
+        tacmdU = b64.split(":")[0]
+        tacmdP = b64.split(":")[1]
+        tlogin = "tacmd login -s {} -u {} -p {} -t 60".format(yml.cfg["hub"], tacmdU, tacmdP)
 
+        os.popen(tlogin).read().strip()
         onlineAgents = os.popen(cmd).read().strip()
         agents = [ag.split()[0] for ag in onlineAgents.split("\n")]
+        os.popen("tacmd logout").read().strip()
         return agents
 
 
@@ -91,6 +98,27 @@ class ERRORs(object):
         self.err_lst = []
         self.timeout_lst = []
         self.flag = False
+
+
+def get_hostname(agent):
+    commaSlipt = agent.split(":")
+    dashPrefixed = commaSlipt[len(commaSlipt)-2].split("_")
+
+    # if it just comma separated
+    if len(dashPrefixed) == 1 and commaSlipt[0] != "RZ":
+        return commaSlipt[len(commaSlipt)-2].lower()
+    else:
+        if commaSlipt[0] == "RZ":
+            split_list = commaSlipt[1].split("-")
+            s = split_list[-1] if len(split_list) <= 3 else "{}-{}".format(
+                split_list[len(split_list)-2], split_list[-1])
+            return s.lower()
+        elif len(dashPrefixed[len(commaSlipt)-2].split("-")) == 2:
+            return dashPrefixed[len(commaSlipt)-2].split("-")[1].lower()
+        elif len(dashPrefixed[len(commaSlipt)-2].split("-")) >= 2:
+            p1 = dashPrefixed[len(commaSlipt)-2].split("-")[1]
+            p2 = dashPrefixed[len(commaSlipt)-2].split("-")[2]
+            return "{}-{}".format(p1.lower(), p2.lower())
 
 
 def slackme(channel, usr, msg, emoji, token):
@@ -157,7 +185,7 @@ def get_ITMREST(agent=None, ibmStatic="Validate", MetricGroup=False, properties=
     headers = {
         'Authorization': "Basic {}".format(restp),
         'cache-control': "no-cache",
-        }
+    }
     try:
         conn.request("GET", url, headers=headers)
         res = conn.getresponse()
@@ -211,7 +239,8 @@ def IntegrityCheck(pcObj):
         etime = round(time.time() - stime)
         sleeptime = (etime * 2) if (etime * 2) > 0 else 0.5
 
-        print("{} [{},{}]".format(ag, etime, sleeptime))
+        server = get_hostname(ag)
+        print("{} - {} [{},{}]".format(server, ag, etime, sleeptime))
         time.sleep(sleeptime)
     return errObj
 
@@ -230,8 +259,9 @@ def ErrReport(err, err_lst):
     slack_list = []
     print("{} {}:".format(err, len(err_lst)))
     for m in err_lst:
-        slack_list.append("{} not working properly (metricGroup: {}, errCode: {})".format(
-            m[0], m[1], m[2]))
+        server = get_hostname(m[0])
+        slack_list.append("(Server:{}) {} not working properly (metricGroup: {}, errCode: {})".format(
+            server, m[0], m[1], m[2]))
     print("\n".join(slack_list))
     slackme(slackObj.channel, slackObj.user,
             slack_list, slackObj.emoji, slackObj.token)
@@ -252,10 +282,10 @@ def main():
             if len(errObj.err_lst) > 0:
                 ErrReport("ERRORS", errObj.err_lst)
             if len(errObj.timeout_lst) > 0:
-                ErrReport("TIMEOUT", errObj.timeout_ls)
+                ErrReport("TIMEOUT", errObj.timeout_lst)
     time.sleep(yml.cfg["cycle"])
 
-    ## ticket
+    # ticket
 
 
 if __name__ == "__main__":
