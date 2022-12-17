@@ -1,6 +1,6 @@
 # ITM6 Integrity Check
 
-- Checks ITM6 agents integrity via ITMRest
+The ITM6 Integrity Check is a script that helps you ensure the integrity of your ITM6 agents by checking their data collection status via ITMRest. By connecting to ITMRest and querying the status of specific metrics, the script can help you verify that your agents are functioning correctly and providing the expected data.
 
 ### SYNOPSIS
 
@@ -10,22 +10,22 @@ python itm6-integrity-check.py <config-file>
 
 ### DESCRIPTION
 
-- itm6-integrity-check.py is a python script that connects via ITMRest and check if the agents is collecting data right as if you were checking on TEP.
+The itm6-integrity-check.py script connects to ITMRest using the credentials and configuration provided in a YAML configuration file. It then checks the status of specific metrics for each of the specified product codes, as defined in the configuration file. If any issues are found, the script will report them and provide details about the problem.
 
-- itm6-integrity-check.py uses specific metric provided in a yaml format, so you can added or remove MetricGroup as needed.
+The script uses the ITM product codes and metric groups specified in the configuration file to determine which metrics to check. You can customize the script by adding or removing product codes and metric groups as needed.
 
 ### ENVIRONMENT
 
-- itm6-integrity-check.py runs on the top of ITMRest, then it needs to be enabled
+In order to run the itm6-integrity-check.py script, you will need the following:
 
-- python3.4+, as (json, pyymal) modules are also required.
+- ITMRest enabled on your system
+- Python 3.4 or higher, along with the json and pyyaml modules
 
+## CONFIGURATION
 
-### itm6-integrity-check.yml
+All configuration for the script is done through the itm6-integrity-check.yml file, which should be placed in the same directory as the script. Alternatively, you can specify the path to the configuration file as a command line argument when running the script.
 
-- all configuration is done into itm6-integrity-check.yml file that needs to be placed in to the same directory as the script. Other wise you need to specify one as argument
-
-#### itm6-integrity-check.yml (example)
+Here is an example of the structure and format of the YAML configuration file:
 
 ```yaml
 tep: "tepserver1"                   # your tep name
@@ -53,6 +53,8 @@ pc:
 ```
 
 ### TESTED PRODUCT CODES
+
+Here are some examples of the product codes and metric groups that are supported by the script:
 
 ```yml
 pc:
@@ -134,10 +136,24 @@ pc:
         COMPFQDN         # Computer Domain Name
 ```
 
+### OUTPUT
+
+The script will output a message for each product code that is checked. If the agents for the product code are collecting data correctly, the message will contain a list of the agents that are online. If there is an error, the message will contain information about the error and the agents that were affected.
+
+If the slack configuration option is set in the YAML file, the script will also send messages to the specified Slack channel. The messages will contain the same information as the output to the console.
+
+### TROUBLESHOOTING
+If you encounter any errors or issues while running the script, check the following:
+
+- Make sure that ITMRest is enabled and that you have a valid username and password for accessing it.
+- Check the configuration file for any errors or typos.
+- If you are having trouble connecting to ITMRest, try running the tacmd command tacmd login to verify that you can authenticate with the server.
+- If you are seeing errors related to metric groups or metrics, make sure that the names are spelled correctly and that they exist on your system.
+- If you are having trouble connecting to Slack, verify that the webhook token is correct and that you have permission to post to the specified channel.
 
 ### EXIT CODES
 
-There spme different error codes and their corresponding error messages that may appear during bad conditions. At the time  of  this  writing,  the exit codes are:
+There some different error codes and their corresponding error messages that may appear during bad conditions. At the time  of  this  writing,  the exit codes are:
 
 ```
 10    Missing argument <yml file>
@@ -146,3 +162,9 @@ There spme different error codes and their corresponding error messages that may
 13    Unable to open config file, file not found
 14    Failed to connect to API
 ```
+
+
+### SEE ALSO
+
+- [ITMRest documentation](https://www.ibm.com/support/knowledgecenter/en/SSFKSJ_7.6.0/com.ibm.tm.itm.doc/itm_rest_reference.html)
+- [Slack API documentation](https://api.slack.com/)
